@@ -1,0 +1,22 @@
+{
+  "name": "provider",
+  "version": "1.0.0",
+  "description": "Shaving Mid Piece -----------------",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://JAForbes@bitbucket.org/JAForbes/tetris.git"
+  },
+  "author": "james.a.forbes@gmail.com <=> (http://james-forbes.com)",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/JAForbes/tetris#readme",
+  "dependencies": {
+    "flyd": "^0.2.2",
+    "j2c": "^0.11.2",
+    "mithril": "^0.2.3",
+    "ramda": "^0.21.0"
+  }
+}
