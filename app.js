@@ -4,61 +4,13 @@ var R = require('ramda')
 var f = require('flyd')
 	f.every = require('flyd/module/every')
 	f.dropRepeats = require('flyd/module/droprepeats').dropRepeatsWith(R.equals)
+	f.lift = require('flyd/module/lift')
+	f.filter = require('flyd/module/filter')
 
-function RAF(){
-	var poll = f.stream()
+var Keyboard = require('./streams/keyboard')
+var Gamepad = require('./streams/gamepad')
+var RAF = require('./streams/requestAnimationFrame')
 
-	function loop(){
-		poll(new Date().getTime())
-		if(!poll.end()){
-			requestAnimationFrame(loop)
-		}
-	}
-	loop()
-	return poll
-}
-
-function Gamepad(options){
-	var index = options.index || 0
-	var end = f.stream()
-	var deadzone = 0.25
-
-	var streams = {}
-
-	var poll = options.poll
-
-	streams.state = f.combine(function(){
-		return navigator.getGamepads()[index]
-	}, [poll])
-
-	var extractButtons =
-		R.pipe(
-			R.prop('buttons')
-			,R.map(R.pick(['pressed', 'value']))
-		)
-
-	streams.axes = f.dropRepeats(
-		streams.state.map(
-			R.pipe(
-				R.prop('axes')
-				,R.map(
-					R.when(
-						R.pipe(Math.abs, R.lt(R.__, deadzone)),
-						R.always(0)
-					)
-				)
-			)
-		)
-	)
-	streams.buttons = f.dropRepeats(streams.state.map(extractButtons))
-	streams.timestamp = f.dropRepeats(streams.state.map(R.prop('timestamp')))
-
-
-	return {
-		streams: streams
-		,end: end
-	}
-}
 
 var sheet = j2c.sheet({
 	'.level' : {
@@ -79,9 +31,8 @@ var sheet = j2c.sheet({
 
 function Deer(gamepad, coords){
 
-
-	var xAxis = gamepad.streams.axes.map(R.prop('0'))
-	var yAxis = gamepad.streams.axes.map(R.prop('1'))
+	var xAxis = gamepad.streams.axes.map(R.propOr(0, '0'))
+	var yAxis = gamepad.streams.axes.map(R.propOr(0, '1'))
 
 	var container = f.stream()
 	var sprite = f.stream()
@@ -135,7 +86,7 @@ function Deer(gamepad, coords){
 	var acceleration = 1
 	var running = f.stream(false)
 
-	gamepad.streams.state.map(function(){
+	f.combine(function(){
 		var a = { x:0 , y: 0}
 		a.x = xAxis() * acceleration
 		a.y = yAxis() * acceleration
@@ -151,7 +102,7 @@ function Deer(gamepad, coords){
 
 		running(Math.hypot(v.x, v.y) > 0.25)
 		coords(p)
-	})
+	}, [xAxis, yAxis, gamepad.streams.state ])
 
 	var zRotation = yAxis.map(function(y){
 		return y * Math.abs(xAxis() * 5)
@@ -222,7 +173,80 @@ function NPCDeer(gamepad, coords){
 
 }
 
-function App(){
+function Grass(){
+	return function(){
+		return m('div', { style: {
+			width: '100vw'
+			,height: '100vh'
+			,backgroundRepeat: 'repeat'
+			,backgroundImage: 'url("img/original/tiles/grass.png")'
+			,imageRendering: 'pixelated'
+
+			,transform: 'translate3d(-100px, -100px, 0px) scale3d(1.0,1, 1.0) rotateX(70deg) rotateZ(45deg)'
+			,position: 'absolute'
+			,transformOrigin: 'top left'
+		}})
+	}
+}
+
+function Menu(){
+
+	var css = j2c.sheet({
+		'.title': {
+			animation: 'title 1s ease-in-out'
+			,animation_fill_mode: 'forwards'
+			,animation_delay: '1s'
+			,transform: 'rotateX(0deg) scale(0)'
+			,fontSize: '14em'
+		}
+		,'@keyframes title': {
+			to: {
+				// '-webkit-filter': 'blur(0px)'
+				'transform': 'rotateX(360deg) scale(1)'
+			}
+		}
+		,'.play': {
+			fontSize: '7em'
+			,top: '4em'
+			,opacity: 0
+			,animation: 'play 2s linear'
+			,animation_fill_mode: 'forwards'
+			,animation_delay: '2.5s'
+		}
+		,'@keyframes play': {
+			to: {
+				opacity: 1
+			}
+		}
+		,'.text': {
+			width: '100%'
+			,textAlign: 'center'
+			,color: 'white'
+			,position: 'absolute'
+			,zIndex: 1
+			,fontFamily: 'Helvetica'
+		}
+		,'.level': {
+			transform: 'scale(10, 10) translate(50%, 50%)'
+		}
+	})
+
+	return function(){
+		return m('div', {className: sheet.game }
+			,m('style', sheet)
+			,m('style', css)
+			,m('h1', {className: css.title + ' ' + css.text} , 'Deeeeerz')
+			,m('a', { href: '/game', config: m.route}
+				,m('h4', { className: css.text + ' ' + css.play }, 'Play?')
+			)
+			,m('div', { className: css.level }
+				,m.component(component(Grass))
+			)
+		)
+	}
+}
+
+function Game(){
 
 	var coords = f.stream({ x:0, y: 0})
 	var npcCoords = f.stream({ x:0, y: 0})
@@ -247,31 +271,34 @@ function App(){
 	}, [f.dropRepeats(translate), el])
 
 	var poll = RAF()
+	var keyboard = Keyboard({ poll: poll })
+	var gamepad = Gamepad({ index: 0 , poll: poll })
+
+	var menuIsPressed = R.pipe(
+		R.prop(9)
+		,R.prop('pressed')
+	)
+	var menuButton = f.filter(menuIsPressed, f.merge(gamepad.streams.buttons, keyboard.streams.buttons))
+
+	menuButton.map(function(){ m.route('/menu') })
 
 	return function(){
 
 		return m('div', {className: sheet.game }
 			,m('div', { className: sheet.level }
 				,m('style', sheet)
-				,m.component(component(Deer), Gamepad({ index: 0 , poll: poll }), coords)
+				,m.component(component(NPCDeer), gamepad, coords)
 				,m('div', { config: el }
 
-					,m.component( component(NPCDeer),  Gamepad({ index: 3 , poll: poll }), npcCoords )
-					,m('div', { style: {
-						width: '100vw'
-						,height: '100vh'
-						,backgroundRepeat: 'repeat'
-						,backgroundImage: 'url("img/original/tiles/grass.png")'
-						,imageRendering: 'pixelated'
-
-    					,transform: 'translate3d(-100px, -100px, 0px) scale3d(1.0,1, 1.0) rotateX(70deg) rotateZ(45deg)'
-						,position: 'absolute'
-						,transformOrigin: 'top left'
-					}})
+					,m.component( component(NPCDeer), keyboard, npcCoords )
+					,m.component( component(Grass) )
 				)
 			)
 		)
 	}
 }
 document.body.style.margin = '0px'
-m.mount(document.body, component(App))
+m.route(document.body, '/menu', {
+	'/game': component(Game)
+	,'/menu': component(Menu)
+})
