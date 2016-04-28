@@ -132,7 +132,7 @@ function Deer(gamepad, coords){
 		return m('div',
 			m('style', css)
 			,m('div', { className: css.container, config: container },
-				m('div', { config: sprite, className: css.idle })
+				m('div', { config: sprite, className: css.sprite+' '+css.idle })
 
 			)
 		)
