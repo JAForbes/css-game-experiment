@@ -105,10 +105,6 @@ function Deer(gamepad, coords){
 		coords(p)
 	}, [xAxis, yAxis, gamepad.streams.state ])
 
-	var zRotation = yAxis.map(function(y){
-		return y * Math.abs(xAxis() * 5)
-	})
-
 	var xDirection = xAxis.map(function(x){
 		return x > 0
 			? 1
@@ -136,7 +132,7 @@ function Deer(gamepad, coords){
 		return m('div',
 			m('style', css)
 			,m('div', { className: css.container, config: container },
-				m('div', { config: sprite })
+				m('div', { config: sprite, className: css.idle })
 
 			)
 		)
@@ -248,7 +244,7 @@ function Menu(){
 	}
 }
 
-function DeerAI(coords){
+function DeerAI(coords, playerCoords){
 	var gamepad = GamepadInterface()
 	var axes = [-0.3,0]
 	var behavior = [
@@ -283,12 +279,12 @@ function DeerAI(coords){
 
 function Game(){
 
-	var coords = f.stream({ x:0, y: 0})
-	var npcCoords = f.stream({ x:0, y: 0})
+	var playerCoords = f.stream({ x:0, y: 0})
+	var aiCoords = f.stream({ x:100, y: 0})
 
 	var el = f.stream()
 
-	var translate = coords.map(
+	var translate = playerCoords.map(
 		R.pipe(
 			R.map(R.multiply(-1))
 			,R.map(Math.floor)
@@ -322,10 +318,10 @@ function Game(){
 		return m('div', {className: sheet.game }
 			,m('div', { className: sheet.level }
 				,m('style', sheet)
-				,m.component(component(Deer), keyboard, coords)
+				,m.component(component(Deer), keyboard, playerCoords)
 				// ,m.component(component(Deer), keyboard, coords)
 				,m('div', { config: el }
-					,DeerAI(npcCoords)
+					,DeerAI(aiCoords, playerCoords)
 					// ,m.component( component(NPCDeer), deerAI, npcCoords )
 					,m.component( component(Grass) )
 				)

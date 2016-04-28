@@ -60,7 +60,7 @@ function Keyboard(options){
 	streams.state =
 		f.sampleOn(
 			options.poll
-			,f.merge(keydownState, keyupState, f.stream(state))
+			,f.merge(keydownState, keyupState)
 		)
 
 
