@@ -18,6 +18,7 @@ var sheet = j2c.sheet({
 		transform: 'translate3d(50vw, 50vh, 0px) scale3d(10,10,1)'
 		,transform_origin: 'top left'
 		,position: 'absolute'
+    	,backfaceVisibility: 'hidden'
 	}
 	,'.game': {
 		margin: '0px'
@@ -46,12 +47,14 @@ function Deer(gamepad, coords){
 			,zIndex: 1
 			,position: 'absolute'
 			,transform: 'translate3d(0px, 0px, 0px)'
+			,backfaceVisibility: 'hidden'
 			,overflow: 'hidden'
 		}
 		,'.sprite': {
 			width: (16*7)+'px'
 			,height: '16px'
 			,transform: 'translate3d(0px, 0px, 0px)'
+			,backfaceVisibility: 'hidden'
 		}
 		,'.running': {
 			backgroundImage: 'url("img/original/characters/dear/right_running.png")'
@@ -62,12 +65,14 @@ function Deer(gamepad, coords){
 				transform: 'translateX(-'+16*3+'px)'
 				,image_rendering: 'pixelated'
 				,filter: 'blur(0)'
-				,transform_origin: '40% 50%'
+				,transform_origin: '50% 50%'
+				,backfaceVisibility: 'hidden'
 			}
 		}
 		,'.idle': {
 			backgroundImage: 'url("img/original/characters/dear/right_grazing.png")'
 			,'animation': 'idle 7s steps(7) infinite'
+			,backfaceVisibility: 'hidden'
 
 		}
 		,'@keyframes idle': {
@@ -75,7 +80,8 @@ function Deer(gamepad, coords){
 				transform: 'translateX(-'+16*7+'px)'
 				,image_rendering: 'pixelated'
 				,filter: 'blur(0)'
-				,transform_origin: '40% 50%'
+				,transform_origin: '50% 50%'
+				,backfaceVisibility: 'hidden'
 			}
 		}
 	})
@@ -133,7 +139,6 @@ function Deer(gamepad, coords){
 			m('style', css)
 			,m('div', { className: css.container, config: container },
 				m('div', { config: sprite, className: css.sprite+' '+css.idle })
-
 			)
 		)
 	}
@@ -150,6 +155,7 @@ function NPCDeer(gamepad, coords){
 			return {
 				position: 'absolute'
 				,transform: 'translate3d('+p.x+'px, '+p.y+'px, 0px) scale3d(1,1,1)'
+				,backfaceVisibility: 'hidden'
 				,zIndex: 1
 				,transition: 'transform 0.1s'
 				,filter: 'blur(0)'
@@ -178,7 +184,7 @@ function Grass(){
 			,backgroundRepeat: 'repeat'
 			,backgroundImage: 'url("img/original/tiles/grass.png")'
 			,imageRendering: 'pixelated'
-
+			,backfaceVisibility: 'hidden'
 			,transform: 'translate3d(-100px, -100px, 0px) scale3d(1.0,1, 1.0) rotateX(70deg) rotateZ(45deg)'
 			,position: 'absolute'
 			,transformOrigin: 'top left'
@@ -226,6 +232,7 @@ function Menu(){
 		}
 		,'.level': {
 			transform: 'scale(10, 10) translate(50%, 50%)'
+			,backfaceVisibility: 'hidden'
 		}
 	})
 
@@ -246,24 +253,25 @@ function Menu(){
 
 function DeerAI(coords, playerCoords){
 	var gamepad = GamepadInterface()
-	var axes = [-0.3,0]
-	var behavior = [
-		[-0.3, 0]
-		,[0,0],[0,0], [0,0]
-		,[0.3, -0.3]
-		,[0,0],[0,0], [0,0]
-		,[0.3,0]
-		,[0,0],[0,0], [0,0]
-		,[0.3,0.3]
-		,[0,0],[0,0], [0,0]
-		,[-0.6, 0]
-		,[0,0],[0,0], [0,0]
-	]
+	var axes = [-0,0]
 
-	f.every(2000).map(function(){
-		axes = behavior[0]
-		console.log(axes)
-		behavior.push(behavior.shift())
+	var distance = f.combine(function(){
+
+		return Math.hypot(
+			playerCoords().x - coords().x, playerCoords().y - coords().y
+		)
+
+	},[coords, playerCoords])
+
+	distance.map(function(d){
+		if(d < 40){
+			axes = [
+				playerCoords().x > coords().x ? -0.3 : 0.3
+				,playerCoords().y > coords().y ? -0.3 : 0.3
+			]
+		} else {
+			axes = [0,0]
+		}
 	})
 
 
