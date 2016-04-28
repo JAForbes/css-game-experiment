@@ -36,8 +36,6 @@ function Keyboard(options){
 	}
 
 	var keydownState = f.combine(function(e){
-
-		console.log(e().keyCode)
 		return (state = {
 			buttons: R.times(R.always({ pressed: false, value: 0 }), 12)
 			,axes: [
@@ -62,7 +60,7 @@ function Keyboard(options){
 	streams.state =
 		f.sampleOn(
 			options.poll
-			,f.merge(keydownState, keyupState)
+			,f.merge(keydownState, keyupState, f.stream(state))
 		)
 
 

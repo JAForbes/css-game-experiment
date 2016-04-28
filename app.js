@@ -9,6 +9,7 @@ var f = require('flyd')
 
 var Keyboard = require('./streams/keyboard')
 var Gamepad = require('./streams/gamepad')
+var GamepadInterface = require('./streams/interface')
 var RAF = require('./streams/requestAnimationFrame')
 
 
@@ -197,7 +198,7 @@ function Menu(){
 			,animation_fill_mode: 'forwards'
 			,animation_delay: '1s'
 			,transform: 'rotateX(0deg) scale(0)'
-			,fontSize: '14em'
+			,fontSize: '15vw'
 		}
 		,'@keyframes title': {
 			to: {
@@ -206,8 +207,9 @@ function Menu(){
 			}
 		}
 		,'.play': {
-			fontSize: '7em'
-			,top: '4em'
+			fontSize: '11vw'
+			,top: 'calc(50vh - 12vw)'
+			,textAlign: 'center'
 			,opacity: 0
 			,animation: 'play 2s linear'
 			,animation_fill_mode: 'forwards'
@@ -245,6 +247,39 @@ function Menu(){
 		)
 	}
 }
+
+function DeerAI(coords){
+	var gamepad = GamepadInterface()
+	var axes = [-0.3,0]
+	var behavior = [
+		[-0.3, 0]
+		,[0,0],[0,0], [0,0]
+		,[0.3, -0.3]
+		,[0,0],[0,0], [0,0]
+		,[0.3,0]
+		,[0,0],[0,0], [0,0]
+		,[0.3,0.3]
+		,[0,0],[0,0], [0,0]
+		,[-0.6, 0]
+		,[0,0],[0,0], [0,0]
+	]
+
+	f.every(2000).map(function(){
+		axes = behavior[0]
+		console.log(axes)
+		behavior.push(behavior.shift())
+	})
+
+
+	RAF().map(function(){
+		var state = gamepad.streams.state()
+		state.axes = axes
+		gamepad.streams.state(state)
+	})
+
+	return m.component(component(NPCDeer), gamepad, coords)
+}
+
 
 function Game(){
 
@@ -287,10 +322,11 @@ function Game(){
 		return m('div', {className: sheet.game }
 			,m('div', { className: sheet.level }
 				,m('style', sheet)
-				,m.component(component(NPCDeer), gamepad, coords)
+				,m.component(component(Deer), keyboard, coords)
+				// ,m.component(component(Deer), keyboard, coords)
 				,m('div', { config: el }
-
-					,m.component( component(NPCDeer), keyboard, npcCoords )
+					,DeerAI(npcCoords)
+					// ,m.component( component(NPCDeer), deerAI, npcCoords )
 					,m.component( component(Grass) )
 				)
 			)
