@@ -15,7 +15,7 @@ var RAF = require('./streams/requestAnimationFrame')
 
 var sheet = j2c.sheet({
 	'.level' : {
-		transform: 'translate3d(50vw, 50vh, 0px) scale3d(10,10,1)'
+		transform: 'translate3d(50vw, 50vh, 0px) scale3d(8,8,1)'
 		,transform_origin: 'top left'
 		,position: 'absolute'
     	,backfaceVisibility: 'hidden'
@@ -157,7 +157,6 @@ function NPCDeer(gamepad, coords){
 				,transform: 'translate3d('+p.x+'px, '+p.y+'px, 0px) scale3d(1,1,1)'
 				,backfaceVisibility: 'hidden'
 				,zIndex: 1
-				,transition: 'transform 0.1s'
 				,filter: 'blur(0)'
 			}
 		}
@@ -305,7 +304,6 @@ function Game(){
 
 	f.combine(function(translate){
 		el().style.transform = translate()
-		el().style.transition = '0.2s'
 		el().style.filter = 'none'
 	}, [f.dropRepeats(translate), el])
 
