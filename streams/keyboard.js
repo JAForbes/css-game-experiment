@@ -50,8 +50,8 @@ function Keyboard(options){
 		return (state = {
 			buttons: R.times(R.always({ pressed: false, value: 0 }), 12)
 			,axes: [
-				X[e().keyCode] ? 0 : state.axes[0]
-				,Y[e().keyCode] ? 0 : state.axes[1]
+				X[e().keyCode] == state.axes[0] ? 0 : state.axes[0]
+				,Y[e().keyCode] == state.axes[1] ? 0 : state.axes[1]
 			]
 			,timestamp: new Date().getTime()
 		})
